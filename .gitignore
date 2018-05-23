@@ -1,0 +1,15 @@
+.dub
+docs.json
+__dummy.html
+docs/
+algorithm-7
+algorithm-7.so
+algorithm-7.dylib
+algorithm-7.dll
+algorithm-7.a
+algorithm-7.lib
+algorithm-7-test-*
+*.exe
+*.o
+*.obj
+*.lst
