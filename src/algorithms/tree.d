@@ -50,7 +50,7 @@ Value wfs_impl(Node tree, in size_t size, in Key key) {
 	return notFound;
 }
 
-struct Set {
+struct Tree {
 	Node tree;
 	size_t size;
 	this (DataSet dataset) {
@@ -68,10 +68,10 @@ struct Set {
 }
 unittest {
 	import dataset: tiny;
-	assert (Set(tiny).dfs(4L) == 5L);
-	assert (Set(tiny).dfs(5L) == 1L);
-	assert (Set(tiny).dfs(10L) == notFound);
-	assert (Set(tiny).wfs(4L) == 5L);
-	assert (Set(tiny).wfs(5L) == 1L);
-	assert (Set(tiny).wfs(10L) == notFound);
+	assert (Tree(tiny).dfs(4L) == 5L);
+	assert (Tree(tiny).dfs(5L) == 1L);
+	assert (Tree(tiny).dfs(10L) == notFound);
+	assert (Tree(tiny).wfs(4L) == 5L);
+	assert (Tree(tiny).wfs(5L) == 1L);
+	assert (Tree(tiny).wfs(10L) == notFound);
 }
