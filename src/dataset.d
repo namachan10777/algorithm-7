@@ -1,6 +1,7 @@
 module dataset;
 
 import std.typecons;
+import std.random: randomShuffle;
 
 alias Key = long;
 alias Value = long;
@@ -20,3 +21,14 @@ DataSet tiny = [
 	tuple(3L, 8L),
 	tuple(2L, 9L),
 ];
+
+DataSet mkdataset(in size_t size) {
+	auto dataset = new Tuple!(Key, Value)[size];
+	foreach (n; 0..size) {
+		dataset[n] = tuple!(Key, Value)(n, n);
+	}
+	return dataset.randomShuffle;
+}
+unittest {
+	assert(mkdataset(1234).length == 1234);
+}
