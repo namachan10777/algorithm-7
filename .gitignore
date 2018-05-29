@@ -11,5 +11,8 @@ algorithm-7.lib
 algorithm-7-test-*
 *.exe
 *.o
+*.a
+*.csv
+*.eps
 *.obj
 *.lst
