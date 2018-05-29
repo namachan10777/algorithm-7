@@ -23,7 +23,7 @@ auto measure(S)(S set, size_t n) {
 		total += t;
 		sw.reset;
 	}
-	return tuple(total, min, max);
+	return tuple(total/n, min, max);
 }
 
 void main() {
