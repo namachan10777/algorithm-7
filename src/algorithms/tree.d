@@ -1,4 +1,4 @@
-module algorithms.dfs;
+module algorithms.tree;
 
 import std.typecons : Tuple, tuple;
 
@@ -74,4 +74,27 @@ unittest {
 	assert (Tree(tiny).wfs(4L) == 5L);
 	assert (Tree(tiny).wfs(5L) == 1L);
 	assert (Tree(tiny).wfs(10L) == notFound);
+}
+
+struct Dfs {
+	Tree tree;
+	this(DataSet dataset) {
+		tree = Tree(dataset);
+	}
+
+	Value search(in Key key) {
+		return tree.dfs(key);
+	}
+}
+
+
+struct Wfs {
+	Tree tree;
+	this(DataSet dataset) {
+		tree = Tree(dataset);
+	}
+
+	Value search(in Key key) {
+		return tree.wfs(key);
+	}
 }
