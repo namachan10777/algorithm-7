@@ -4,11 +4,6 @@ import dataset: Key, Value, DataSet, notFound;
 import std.digest.sha: SHA256;
 import std.typecons: Tuple;
 
-union Seed {
-	Key key;
-	ubyte[Key.sizeof] seeds;
-}
-
 size_t hash(in Key key, in size_t max) {
 	immutable x = key;
 	immutable y = (x ^ (x << 7));
@@ -72,4 +67,45 @@ unittest {
 	import dataset: tiny;
 	assert (Chain(tiny).search(4L) == 5L);
 	assert (Chain(tiny).search(5L) == 1L);
+}
+
+struct OpenAddressCont {
+	Key key;
+	Value val;
+	bool active;
+}
+
+import std.stdio;
+struct OpenAddress {
+	OpenAddressCont[] arr;
+
+	size_t rehash(in size_t n) {
+		return (n + 1) % arr.length;
+	}
+
+	this(in DataSet dataset) {
+		arr = new OpenAddressCont[dataset.length];
+		foreach (pair; dataset) {
+			auto hashed = hash(pair[0], dataset.length);
+			while(arr[hashed].active && arr[hashed].key != pair[0]){
+				hashed = rehash(hashed);
+			}
+			arr[hashed] = OpenAddressCont(pair[0], pair[1], true);
+		}
+	}
+
+	Value search(in Key key) {
+		auto hashed = hash(key, arr.length);
+		while (true) {
+			if (!arr[hashed].active) return notFound;
+			if (arr[hashed].key == key) break;
+			hashed = rehash(hashed);
+		}
+		return arr[hashed].val;
+	}
+}
+unittest {
+	import dataset: tiny;
+	assert (OpenAddress(tiny).search(4L) == 5L);
+	assert (OpenAddress(tiny).search(5L) == 1L);
 }
