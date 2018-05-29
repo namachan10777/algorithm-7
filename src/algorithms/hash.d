@@ -4,6 +4,8 @@ import dataset: Key, Value, DataSet, notFound;
 import std.digest.sha: SHA256;
 import std.typecons: Tuple;
 
+enum tableSizeRatio = 1.4f;
+
 size_t hash(in Key key, in size_t max) {
 	immutable x = key;
 	immutable y = (x ^ (x << 7));
@@ -16,7 +18,7 @@ enum State {
 	Chain
 }
 
-struct Cont {
+struct ChainElm {
 	State state = State.Empty;
 	union {
 		Tuple!(Key, Value) imm;
@@ -38,29 +40,29 @@ struct Cont {
 }
 
 struct Chain {
-	Cont[] conts;
+	ChainElm[] table;
 	this(in DataSet dataset) {
-		conts = new Cont[dataset.length];
+		table = new ChainElm[cast(ulong)(dataset.length * tableSizeRatio)];
 		foreach (pair; dataset) {
-			auto hashed = hash(pair[0], dataset.length);
-			final switch (conts[hashed].state) {
+			auto hashed = hash(pair[0], table.length);
+			final switch (table[hashed].state) {
 			case State.Empty:
-				conts[hashed].state = State.Value;
-				conts[hashed].imm = pair;
+				table[hashed].state = State.Value;
+				table[hashed].imm = pair;
 				break;
 			case State.Value:
-				conts[hashed].state = State.Chain;
-				conts[hashed].chain = [conts[hashed].imm, pair];
+				table[hashed].state = State.Chain;
+				table[hashed].chain = [table[hashed].imm, pair];
 				break;
 			case State.Chain:
-				conts[hashed].chain = conts[hashed].chain ~ pair;
+				table[hashed].chain = table[hashed].chain ~ pair;
 				break;
 			}
 		}
 	}
 
 	Value search(in Key key) {
-		return conts[hash(key, conts.length)].get(key);
+		return table[hash(key, table.length)].get(key);
 	}
 }
 unittest {
@@ -69,7 +71,7 @@ unittest {
 	assert (Chain(tiny).search(5L) == 1L);
 }
 
-struct OpenAddressCont {
+struct OpenAddressElm {
 	Key key;
 	Value val;
 	bool active;
@@ -77,31 +79,31 @@ struct OpenAddressCont {
 
 import std.stdio;
 struct OpenAddress {
-	OpenAddressCont[] arr;
+	OpenAddressElm[] table;
 
 	size_t rehash(in size_t n) {
-		return (n + 1) % arr.length;
+		return (n + 1) % table.length;
 	}
 
 	this(in DataSet dataset) {
-		arr = new OpenAddressCont[dataset.length];
+		table = new OpenAddressElm[cast(ulong)(dataset.length * tableSizeRatio)];
 		foreach (pair; dataset) {
-			auto hashed = hash(pair[0], dataset.length);
-			while(arr[hashed].active && arr[hashed].key != pair[0]){
+			auto hashed = hash(pair[0], table.length);
+			while(table[hashed].active && table[hashed].key != pair[0]){
 				hashed = rehash(hashed);
 			}
-			arr[hashed] = OpenAddressCont(pair[0], pair[1], true);
+			table[hashed] = OpenAddressElm(pair[0], pair[1], true);
 		}
 	}
 
 	Value search(in Key key) {
-		auto hashed = hash(key, arr.length);
+		auto hashed = hash(key, table.length);
 		while (true) {
-			if (!arr[hashed].active) return notFound;
-			if (arr[hashed].key == key) break;
+			if (!table[hashed].active) return notFound;
+			if (table[hashed].key == key) break;
 			hashed = rehash(hashed);
 		}
-		return arr[hashed].val;
+		return table[hashed].val;
 	}
 }
 unittest {
