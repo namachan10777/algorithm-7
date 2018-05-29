@@ -33,8 +33,9 @@ void main() {
 	auto maxFile = File("max.csv", "w");
 	auto meanFile = File("mean.csv", "w");
 	import std.stdio;
-	for (float x = 1;; x *= 1.1f) {
+	for (float x = 1;; x += 100) {
 		size_t n = cast(size_t)x;
+		stderr.writeln(n);
 		totalTimeCounter.start;
 		auto dataset = mkdataset(n);
 
@@ -54,12 +55,36 @@ void main() {
 		auto chainT = measure!Chain(chain, n);
 		auto openaddressT = measure!OpenAddress(openaddress, n);
 
-		meanFile.writefln!"%s, %s, %s, %s, %s, %s, %s, %s"(n, lineT[0], sentinelT[0], binaryT[0], dfsT[0], wfsT[0], chainT[0], openaddressT[0]);
-		minFile.writefln!"%s, %s, %s, %s, %s, %s, %s, %s"(n, lineT[1], sentinelT[1], binaryT[1], dfsT[1], wfsT[0], chainT[1], openaddressT[1]);
-		maxFile.writefln!"%s, %s, %s, %s, %s, %s, %s, %s"(n, lineT[2], sentinelT[2], binaryT[2], dfsT[2], wfsT[0], chainT[2], openaddressT[2]);
+		meanFile.writefln!"%s, %s, %s, %s, %s, %s, %s, %s,"(n, lineT[0], sentinelT[0], binaryT[0], dfsT[0], wfsT[0], chainT[0], openaddressT[0]);
+		minFile.writefln!"%s, %s, %s, %s, %s, %s, %s, %s,"(n, lineT[1], sentinelT[1], binaryT[1], dfsT[1], wfsT[0], chainT[1], openaddressT[1]);
+		maxFile.writefln!"%s, %s, %s, %s, %s, %s, %s, %s,"(n, lineT[2], sentinelT[2], binaryT[2], dfsT[2], wfsT[0], chainT[2], openaddressT[2]);
 
 		totalTimeCounter.stop;
 		if (totalTimeCounter.peek.total!"seconds" > 10) break;
-		totalTimeCounter.reset;
+	}
+	totalTimeCounter.reset;
+	auto minZoomFile = File("min-zoom.csv", "w");
+	auto maxZoomFile = File("max-zoom.csv", "w");
+	auto meanZoomFile = File("mean-zoom.csv", "w");
+	for (float x = 1;; x += 1000) {
+		size_t n = cast(size_t)x;
+		stderr.writeln(n);
+		totalTimeCounter.start;
+		auto dataset = mkdataset(n);
+
+		auto binary = Binary(dataset);
+		auto chain = Chain(dataset);
+		auto openaddress = OpenAddress(dataset);
+
+		auto binaryT = measure!Binary(binary, n);
+		auto chainT = measure!Chain(chain, n);
+		auto openaddressT = measure!OpenAddress(openaddress, n);
+
+		meanZoomFile.writefln!"%s, %s, %s, %s,"(n, binaryT[0], chainT[0], openaddressT[0]);
+		minZoomFile.writefln!"%s, %s, %s, %s,"(n, binaryT[1], chainT[1], openaddressT[1]);
+		maxZoomFile.writefln!"%s, %s, %s, %s,"(n, binaryT[2], chainT[2], openaddressT[2]);
+
+		totalTimeCounter.stop;
+		if (totalTimeCounter.peek.total!"seconds" > 10) break;
 	}
 }
