@@ -1,0 +1,51 @@
+\documentclass[dvipdfmx]{jsarticle}
+\usepackage{minted}
+\usepackage{url}
+\author{4EC 中野 将生}
+\date{2018.5.30}
+\title{データの探索}
+\begin{document}
+	\maketitle
+	\section{概要}
+		以下のアルゴリズムについて比較した。
+		\begin{itemize}
+			\item 線形探索
+			\item 線形探索(番兵法)
+			\item 二分探索
+			\item ハッシュ法(チェイン法)
+			\item ハッシュ法(オープンアドレス法)
+			\item 幅優先探索(DFS)
+			\item 深さ優先探索(WFS)
+		\end{itemize}
+	\section{実装}
+		線形探索、線形探索(番兵法)、二分探索はそれぞれ配列で、DFSとWFSは木で実装した。
+		ソースコードの全体は\url{https://github.com/namachan10777/algorithm-7}にある。
+		\subsection{ソースコード}
+			\subsubsection{線形探索、線形探索(番兵法)、二部探索}
+				\inputminted{d}{./src/algorithms/linear.d}
+			\subsubsection{幅優先探索、深さ優先探索}
+				\inputminted{d}{./src/algorithms/tree.d}
+			\subsubsection{ハッシュ法}
+				\inputminted{d}{./src/algorithms/hash.d}
+	\section{実行結果}
+	\section{環境}
+		\subsection{実行環境}
+			\subsubsection{CPU}
+				% TODO やれ
+			\subsubsection{OS}
+				Arch Linux \\
+				カーネルバージョン 4.16.11-1-ARCH
+			\subsubsection{RAM}
+				% TODO 詳しく
+				8 GB
+		\subsection{ビルドツール}
+			\subsubsection{OS}
+				Arch Linux \\
+				カーネルバージョン 4.16.11-1-ARCH
+			\subsubsection{コンパイラ}
+				DMD64 D Compiler v2.080.0-dirty
+			\subsubsection{ビルドツール}
+				DUB version 1.9.0, built on May  3 2018
+			\subsubsection{ビルドオプション}
+				--release
+\end{document}
