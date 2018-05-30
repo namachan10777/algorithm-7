@@ -16,3 +16,10 @@ algorithm-7-test-*
 *.eps
 *.obj
 *.lst
+*.aux
+*.dvi
+*.fls
+*.fdb_latexmk
+*.log
+*.synctex.gz
+*.pdf
