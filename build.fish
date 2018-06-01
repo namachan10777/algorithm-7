@@ -2,18 +2,21 @@ set HERE (cd (dirname (status --current-filename)); pwd)
 
 cd $HERE
 
-dub run
-
-for script in ./scripts/*.txt
-	gnuplot $script
-end
 
 mkdir -p fig
+mkdir -p cache
 
-for eps in *.eps
-	mv $eps ./fig/
+dub run
+
+for script in ./*.script
+	gnuplot $script
+	mv $script
+end
+
+for pdf in *.pdf
+	mv $pdf ./fig/
 end
 
 for csv in *.csv
-	rm $csv
+	mv $csv
 end

@@ -26,65 +26,106 @@ auto measure(S)(S set, size_t n) {
 	return tuple(total/n, min, max);
 }
 
+alias Time = Tuple!(size_t, size_t, size_t);
+struct Column(alias len) {
+	size_t n;
+	Time[len] times;
+}
+alias Table(alias n)  = Column!(n)[];
+
+import std.stdio;
+
+Table!(Ss.length) makeLog(Ss...)(in size_t interval, in size_t time_limit) {
+	Column!(Ss.length)[] tbl;
+	StopWatch totalTime;
+	totalTime.start;
+	for (size_t n = 1;; n+=interval) {
+		stderr.writef!"measure for n=%s "(n);
+		auto dataset = mkdataset(n);
+		size_t id;
+		Column!(Ss.length) col;
+		col.n = n;
+		tbl ~= col;
+		static foreach(S; Ss) {{
+			stderr.writef!"%s "(S.stringof);
+			auto set = S(dataset);
+			size_t min, max, mean;
+			StopWatch measuringTime;
+			measuringTime.start;
+			size_t m = 0;
+			for (;;) {
+				++m;
+				auto result = measure!S(set, n);
+				mean += result[0];
+				min  += result[1];
+				max  += result[2];
+				if (measuringTime.peek.total!"msecs" > 100) break;
+			}
+			tbl[$-1].times[id++] = tuple(mean/m, min/m, max/m);
+		}}
+		stderr.writeln;
+		if (totalTime.peek.total!"seconds" > time_limit) break;
+	}
+	return tbl;
+}
+
+string generatePlotScript(Ss...)(in string[string] typeNameToLegend, in string csvName, in string figName) {
+	import std.format;
+	string commands = format!"plot \"%s\" using 1:2 w l title \"%s\"\n"(csvName, typeNameToLegend[Ss[0].stringof]);
+	static foreach (i, S; Ss[1..$]) {
+		commands ~=
+			format!"replot \"%s\" using 1:%s w l title \"%s\"\n"(csvName, i+3, typeNameToLegend[S.stringof]);
+	}
+	enum base =
+q{
+set datafile separator ","
+set xl "dataset size"
+set yl "nsecs"
+%s
+set terminal pdf
+set out "%s"
+replot
+};
+	return format!base(commands, figName);
+}
+
+void writePlotScripts(Ss...)(in string[string] typeNameToLegend, in string base) {
+	File(base~"-min.script", "w").write(generatePlotScript!Ss(typeNameToLegend, base~"-min.csv", base~"-min.pdf"));
+	File(base~"-max.script", "w").write(generatePlotScript!Ss(typeNameToLegend, base~"-max.csv", base~"-max.pdf"));
+	File(base~"-mean.script", "w").write(generatePlotScript!Ss(typeNameToLegend, base~"-mean.csv", base~"-mean.pdf"));
+}
+
+void flushLog(T: Column!(len)[], alias len)(in T tbl, in string baseName) {
+	auto meanF = File(baseName~"-mean.csv", "w");
+	auto minF = File(baseName~"-min.csv", "w");
+	auto maxF = File(baseName~"-max.csv", "w");
+	foreach (col; tbl) {
+		meanF.writef!"%s,"(col.n);
+		minF.writef!"%s,"(col.n);
+		maxF.writef!"%s,"(col.n);
+		foreach (time; col.times) {
+			meanF.writef!" %s,"(time[0]);
+			minF.writef!" %s,"(time[1]);
+			maxF.writef!" %s,"(time[2]);
+		}
+		meanF.writeln;
+		minF.writeln;
+		maxF.writeln;
+	}
+}
+
 void main() {
-	StopWatch totalTimeCounter;
-	StopWatch sw;
-	auto minFile = File("min.csv", "w");
-	auto maxFile = File("max.csv", "w");
-	auto meanFile = File("mean.csv", "w");
-	import std.stdio;
-	for (float x = 1;; x += 100) {
-		size_t n = cast(size_t)x;
-		stderr.writeln(n);
-		totalTimeCounter.start;
-		auto dataset = mkdataset(n);
-
-		auto line = Line(dataset);
-		auto sentinel = Sentinel(dataset);
-		auto binary = Binary(dataset);
-		auto dfs = Dfs(dataset);
-		auto wfs = Wfs(dataset);
-		auto chain = Chain(dataset);
-		auto openaddress = OpenAddress(dataset);
-
-		auto lineT = measure!Line(line, n);
-		auto sentinelT = measure!Sentinel(sentinel, n);
-		auto binaryT = measure!Binary(binary, n);
-		auto dfsT = measure!Dfs(dfs, n);
-		auto wfsT = measure!Wfs(wfs, n);
-		auto chainT = measure!Chain(chain, n);
-		auto openaddressT = measure!OpenAddress(openaddress, n);
-
-		meanFile.writefln!"%s, %s, %s, %s, %s, %s, %s, %s,"(n, lineT[0], sentinelT[0], binaryT[0], dfsT[0], wfsT[0], chainT[0], openaddressT[0]);
-		minFile.writefln!"%s, %s, %s, %s, %s, %s, %s, %s,"(n, lineT[1], sentinelT[1], binaryT[1], dfsT[1], wfsT[0], chainT[1], openaddressT[1]);
-		maxFile.writefln!"%s, %s, %s, %s, %s, %s, %s, %s,"(n, lineT[2], sentinelT[2], binaryT[2], dfsT[2], wfsT[0], chainT[2], openaddressT[2]);
-
-		totalTimeCounter.stop;
-		if (totalTimeCounter.peek.total!"seconds" > 10) break;
-	}
-	totalTimeCounter.reset;
-	auto minZoomFile = File("min-zoom.csv", "w");
-	auto maxZoomFile = File("max-zoom.csv", "w");
-	auto meanZoomFile = File("mean-zoom.csv", "w");
-	for (float x = 1;; x += 1000) {
-		size_t n = cast(size_t)x;
-		stderr.writeln(n);
-		totalTimeCounter.start;
-		auto dataset = mkdataset(n);
-
-		auto binary = Binary(dataset);
-		auto chain = Chain(dataset);
-		auto openaddress = OpenAddress(dataset);
-
-		auto binaryT = measure!Binary(binary, n);
-		auto chainT = measure!Chain(chain, n);
-		auto openaddressT = measure!OpenAddress(openaddress, n);
-
-		meanZoomFile.writefln!"%s, %s, %s, %s,"(n, binaryT[0], chainT[0], openaddressT[0]);
-		minZoomFile.writefln!"%s, %s, %s, %s,"(n, binaryT[1], chainT[1], openaddressT[1]);
-		maxZoomFile.writefln!"%s, %s, %s, %s,"(n, binaryT[2], chainT[2], openaddressT[2]);
-
-		totalTimeCounter.stop;
-		if (totalTimeCounter.peek.total!"seconds" > 10) break;
-	}
+	import std.meta;
+	auto map = [
+		"Line": "line",
+		"Sentinel": "line(sentinel)",
+		"Binary": "binary search",
+		"Wfs": "WFS",
+		"Dfs": "DFS",
+		"Chain": "hash(chain)",
+		"OpenAddress": "hash(open address"
+	];
+	alias AllSet = AliasSeq!(Line, Sentinel, Binary, Wfs, Dfs, Chain, OpenAddress);
+	makeLog!AllSet(1000, 1).flushLog("all");
+	writePlotScripts!AllSet(map, "all");
 }

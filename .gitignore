@@ -24,3 +24,4 @@ algorithm-7-test-*
 *.synctex.gz
 *.pdf
 _minted-report/
+*.script
