@@ -10,7 +10,7 @@ dub run
 
 for script in ./*.script
 	gnuplot $script
-	mv $script
+	mv $script ./cache
 end
 
 for pdf in *.pdf
@@ -18,5 +18,5 @@ for pdf in *.pdf
 end
 
 for csv in *.csv
-	mv $csv
+	mv $csv ./cache
 end
