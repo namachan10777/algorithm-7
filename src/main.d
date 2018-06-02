@@ -10,9 +10,9 @@ enum MeasureTimeMax = 10;
 
 auto measure(S)(S set, size_t n) {
 	StopWatch sw;
-	size_t min = size_t.max;
-	size_t max = 0;
-	size_t total = 0;
+	double min = double.max;
+	double max = 0.0;
+	double total = 0.0;
 	for (size_t i = 0; i < n; ++i) {
 		sw.start;
 		set.search(i);
@@ -26,7 +26,7 @@ auto measure(S)(S set, size_t n) {
 	return tuple(total/n, min, max);
 }
 
-alias Time = Tuple!(size_t, size_t, size_t);
+alias Time = Tuple!(double, double, double);
 struct Column(alias len) {
 	size_t n;
 	Time[len] times;
@@ -35,11 +35,11 @@ alias Table(alias n)  = Column!(n)[];
 
 import std.stdio;
 
-Table!(Ss.length) makeLog(Ss...)(in size_t interval, in size_t time_limit) {
+Table!(Ss.length) makeLog(Ss...)(in size_t interval, in size_t timeLimit, in size_t nLimit) {
 	Column!(Ss.length)[] tbl;
 	StopWatch totalTime;
 	totalTime.start;
-	for (size_t n = 1;; n+=interval) {
+	for (size_t n = 1;n < nLimit; n+=interval) {
 		stderr.writef!"measure for n=%s "(n);
 		auto dataset = mkdataset(n);
 		size_t id;
@@ -49,7 +49,7 @@ Table!(Ss.length) makeLog(Ss...)(in size_t interval, in size_t time_limit) {
 		static foreach(S; Ss) {{
 			stderr.writef!"%s "(S.stringof);
 			auto set = S(dataset);
-			size_t min, max, mean;
+			double min = 0.0, max = 0.0, mean = 0.0;
 			StopWatch measuringTime;
 			measuringTime.start;
 			size_t m = 0;
@@ -64,7 +64,7 @@ Table!(Ss.length) makeLog(Ss...)(in size_t interval, in size_t time_limit) {
 			tbl[$-1].times[id++] = tuple(mean/m, min/m, max/m);
 		}}
 		stderr.writeln;
-		if (totalTime.peek.total!"seconds" > time_limit) break;
+		if (totalTime.peek.total!"seconds" > timeLimit) break;
 	}
 	return tbl;
 }
@@ -126,6 +126,14 @@ void main() {
 		"OpenAddress": "hash(open address"
 	];
 	alias AllSet = AliasSeq!(Line, Sentinel, Binary, Wfs, Dfs, Chain, OpenAddress);
-	makeLog!AllSet(1000, 1).flushLog("all");
+	makeLog!AllSet(5000, 1200, 15000).flushLog("all");
 	writePlotScripts!AllSet(map, "all");
+
+	alias LineHash = AliasSeq!(Line, Sentinel, Binary, Chain, OpenAddress);
+	makeLog!LineHash(100, 600, 15000).flushLog("line-hash");
+	writePlotScripts!LineHash(map, "line-hash");
+
+	alias BinaryHash = AliasSeq!(Binary, Chain, OpenAddress);
+	makeLog!BinaryHash(100, 600, 15000).flushLog("binary-hash");
+	writePlotScripts!BinaryHash(map, "binary-hash");
 }
