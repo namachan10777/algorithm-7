@@ -19,7 +19,7 @@ auto measure(S, alias samplingInterval)(S set, size_t n) {
 	for (size_t i = 0; i < n; i += (i/samplingInterval > 0 ? i/samplingInterval : 1)) {
 		++cnt;
 		sw.start;
-		set.search(i);
+		assert(set.search(i) == i);
 		sw.stop;
 		auto t = sw.peek.total!"nsecs";
 		min = t < min ? t : min;
