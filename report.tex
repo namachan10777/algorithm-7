@@ -1,13 +1,21 @@
 \documentclass[dvipdfmx]{jsarticle}
 \usepackage{minted}
 \usepackage{url}
+\usepackage{graphicx}
+\usepackage{multicol}
 \author{4EC 中野 将生}
 \date{2018.5.30}
 \title{データの探索}
+\graphicspath{{./fig/}}
+\newmintedfile[inputcode]{d}{
+	frame=single,
+	framesep=2mm,
+	linenos
+}
 \begin{document}
 	\maketitle
 	\section{概要}
-		以下のアルゴリズムについて比較した。
+		以下のアルゴリズムについて、比較を行った。
 		\begin{itemize}
 			\item 線形探索
 			\item 線形探索(番兵法)
@@ -17,24 +25,73 @@
 			\item 幅優先探索(DFS)
 			\item 深さ優先探索(WFS)
 		\end{itemize}
-	\section{実装}
-		線形探索、線形探索(番兵法)、二分探索はそれぞれ配列で、DFSとWFSは木で実装した。
-		ソースコードの全体は\url{https://github.com/namachan10777/algorithm-7}にある。
-		\subsection{ソースコード}
-			\subsubsection{線形探索、線形探索(番兵法)、二部探索}
-				\inputminted{d}{./src/algorithms/linear.d}
-			\subsubsection{幅優先探索、深さ優先探索}
-				\inputminted{d}{./src/algorithms/tree.d}
-			\subsubsection{ハッシュ法}
-				\inputminted{d}{./src/algorithms/hash.d}
+		線形探索、線形探索(番兵法)、二部探索は配列、DFSとWFSは構造体を使った木構造で実装している。
+	\section{計測方法}
+		データセットのサイズを$n$、データセットのサイズの増分を$\Delta n = n$、探索に使うキーの選択間隔を$\Delta k/i$(この時、$Delta n > 0$)とする。
+		最小、最大、平均時間はデータセットの全てのキーを間隔$\Delta k$で間引いたキーでアクセスして最小、最大、平均の時間を計測する。
+		$n$に対する計測時間の合計が$100 ms$に達するまで計測を反復し、最小、最大、平均の計測結果の平均値をnに対する計測結果とする。
 	\section{実行結果}
+		\subsection{平均時間}
+			\begin{figure}[H]
+				\caption{全てのアルゴリズム($i = 100$, $\Delta n = 500$)}
+				\includegraphics[width=14cm]{all-mean.pdf}
+				\label{fig:all-mean}
+			\end{figure}
+			線形探索とDFS、WFSは$O(n)$と予想できる。
+			木構造の探索が配列の探索と比べて低速なのが目立つ。
+			後半でWFSのパフォーマンスのブレが大きくなっている。
+			\begin{figure}[H]
+				\caption{線形探索、線形探索(番兵法)、二分探索、ハッシュ法(チェイン法)、ハッシュ法(オープンアドレス法)($i = 100$, $\Delta n = 500$)}
+				\includegraphics[width=14cm]{line-hash-mean.pdf}
+				\label{fig:line-hash-mean}
+			\end{figure}
+			速度の遅かったDFS、WFSを除いて計測したもの。
+			線形探索はどちらも殆ど探索時間は変わらないが、番兵法の方がやや高速である。
+			\begin{figure}[H]
+				\caption{二分探索、ハッシュ法(チェイン法)、ハッシュ法(オープンアドレス法)($i = 100$, $\Delta n = 500$)}
+				\includegraphics[width=14cm]{binary-hash-mean.pdf}
+				\label{fig:binary-hash-mean}
+			\end{figure}
+			高速な二分探索、ハッシュ法のみの計測結果。
+			二分探索のオーダーが$O(\log n)$であることが読み取れる。
+			オープンアドレス法の速度にピークが現れるのはハッシュ値の衝突によるものではないかと考えられる。
+		\subsection{最小時間}
+			\begin{figure}[H]
+				\caption{全てのアルゴリズム($i = 100$, $\Delta n = 500$)}
+				\includegraphics[width=14cm]{all-min.pdf}
+			\end{figure}
+			理論値では全て0になるはずだがWFSは大きな値が出ている。
+		\subsection{最大時間}
+			\begin{figure}[H]
+				\caption{全てのアルゴリズム($i = 100$, $\Delta n = 500$)}
+				\includegraphics[width=14cm]{all-max.pdf}
+			\end{figure}
+			WFS、DFSは平均値と変わらず$O(n)$であることが読み取れる。
+			平均値の図\ref{fig:all-mean}以上にWFSと他のアルゴリズムの差が着いている。
+			\begin{figure}[H]
+				\caption{線形探索、線形探索(番兵法)、二分探索、ハッシュ法(チェイン法)、ハッシュ法(オープンアドレス法)($i = 100$, $\Delta n = 500$)}
+				\includegraphics[width=14cm]{line-hash-max.pdf}
+			\end{figure}
+			線形探索は平均値と変わらず$O(n)$であることが読み取れる。
+			図\ref{fig:line-hash-mean}では殆ど確認出来なかったハッシュ法、二分探索の値が確認できることから、
+			ハッシュ法、二分探索と線形探索の最大計算時間の差は平均値のそれ程大きくないことが分かる。
+			\begin{figure}[H]
+				\caption{二分探索、ハッシュ法(チェイン法)、ハッシュ法(オープンアドレス法)($i = 100$, $\Delta n = 500$)}
+				\includegraphics[width=14cm]{binary-hash-max.pdf}
+			\end{figure}
+			平均値と比べて振れ幅が大きい。
+			図\ref{fig:binary-hash-mean}と比べて計算時間の差が縮まっている事が分かる。
+	\section{考察}
+		配列操作と構造体の木の操作では計算量のオーダーは等しいはずだが、
+		大きな差が出たことから配列へのインデックスアクセスと木構造へのアクセスではキャッシュミスなどでコストが実際には異っていると予想される。
+		$O(\log n)$と$O(n)$ではnが十分小さい領域においては$O(n)$の方が高速で計算可能と考えられる。
 	\section{環境}
 		\subsection{実行環境}
 			\subsubsection{CPU}
 				% TODO やれ
 			\subsubsection{OS}
-				Arch Linux \\
-				カーネルバージョン 4.16.11-1-ARCH
+				Arch Linux
+				(カーネルバージョン 4.16.11-1-ARCH
 			\subsubsection{RAM}
 				% TODO 詳しく
 				8 GB
@@ -46,6 +103,41 @@
 				DMD64 D Compiler v2.080.0-dirty
 			\subsubsection{ビルドツール}
 				DUB version 1.9.0, built on May  3 2018
-			\subsubsection{ビルドオプション}
-				--release
+	\section{ソースリスト}
+		ソースコードの全体は\url{https://github.com/namachan10777/algorithm-7}にある。
+		\begin{minted}{text}
+./
+|
++--algorithms/
+|  |
+|  +--linear.d
+|  |
+|  +--tree.d
+|  |
+|  +--hash.d
+|
++--main.d
+|
++--dataset.d
+		\end{minted}
+		\subsection{線形探索、線形探索(番兵法)、二部探索}
+			linear.d
+			\inputcode{./src/algorithms/linear.d}
+			\newpage
+		\subsection{幅優先探索、深さ優先探索}
+			tree.d
+			\inputcode{./src/algorithms/tree.d}
+			\newpage
+		\subsubsection{ハッシュ法}
+			hash.d
+			\inputcode{./src/algorithms/hash.d}
+			\newpage
+		\subsection{計測用コード}
+			main.d
+			\inputcode{./src/main.d}
+			\newpage
+		\subsection{データセット}
+			dataset.d
+			\inputcode{./src/dataset.d}
+			\newpage
 \end{document}
