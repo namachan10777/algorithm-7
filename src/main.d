@@ -15,9 +15,10 @@ auto measure(S, alias samplingInterval)(S set, size_t n) {
 	time_t min = time_t.max;
 	time_t max = 0;
 	time_t total = 0;
-	size_t cnt;
+	size_t cnt;	//計測の実行回数
 	for (size_t i = 0; i < n; i += (i/samplingInterval > 0 ? i/samplingInterval : 1)) {
 		++cnt;
+		//探索時間の測定
 		sw.start;
 		auto result = set.search(i);
 		sw.stop;
