@@ -20,3 +20,5 @@ end
 for csv in *.csv
 	mv $csv ./cache
 end
+
+latexmk report.tex
