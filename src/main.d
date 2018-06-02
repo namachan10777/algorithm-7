@@ -8,12 +8,16 @@ import algorithms.hash;
 
 enum MeasureTimeMax = 10;
 
-auto measure(S)(S set, size_t n) {
+alias time_t = double;
+
+auto measure(S, alias samplingInterval)(S set, size_t n) {
 	StopWatch sw;
-	double min = double.max;
-	double max = 0.0;
-	double total = 0.0;
-	for (size_t i = 0; i < n; ++i) {
+	time_t min = time_t.max;
+	time_t max = 0;
+	time_t total = 0;
+	size_t cnt;
+	for (size_t i = 0; i < n; i += (i/samplingInterval > 0 ? i/samplingInterval : 1)) {
+		++cnt;
 		sw.start;
 		set.search(i);
 		sw.stop;
@@ -23,10 +27,10 @@ auto measure(S)(S set, size_t n) {
 		total += t;
 		sw.reset;
 	}
-	return tuple(total/n, min, max);
+	return tuple(total/cnt, min, max);
 }
 
-alias Time = Tuple!(double, double, double);
+alias Time = Tuple!(time_t, time_t, time_t);
 struct Column(alias len) {
 	size_t n;
 	Time[len] times;
@@ -49,13 +53,13 @@ Table!(Ss.length) makeLog(Ss...)(in size_t interval, in size_t timeLimit, in siz
 		static foreach(S; Ss) {{
 			stderr.writef!"%s "(S.stringof);
 			auto set = S(dataset);
-			double min = 0.0, max = 0.0, mean = 0.0;
+			time_t min = 0, max = 0, mean = 0;
 			StopWatch measuringTime;
 			measuringTime.start;
 			size_t m = 0;
 			for (;;) {
 				++m;
-				auto result = measure!S(set, n);
+				auto result = measure!(S, 100)(set, n);
 				mean += result[0];
 				min  += result[1];
 				max  += result[2];
@@ -126,14 +130,14 @@ void main() {
 		"OpenAddress": "hash(open address"
 	];
 	alias AllSet = AliasSeq!(Line, Sentinel, Binary, Wfs, Dfs, Chain, OpenAddress);
-	makeLog!AllSet(5000, 1200, 15000).flushLog("all");
+	makeLog!AllSet(100, 1200, 15000).flushLog("all");
 	writePlotScripts!AllSet(map, "all");
 
 	alias LineHash = AliasSeq!(Line, Sentinel, Binary, Chain, OpenAddress);
-	makeLog!LineHash(100, 600, 15000).flushLog("line-hash");
+	makeLog!LineHash(50, 600, 15000).flushLog("line-hash");
 	writePlotScripts!LineHash(map, "line-hash");
 
 	alias BinaryHash = AliasSeq!(Binary, Chain, OpenAddress);
-	makeLog!BinaryHash(100, 600, 15000).flushLog("binary-hash");
+	makeLog!BinaryHash(50, 600, 15000).flushLog("binary-hash");
 	writePlotScripts!BinaryHash(map, "binary-hash");
 }
