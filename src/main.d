@@ -127,7 +127,7 @@ void main() {
 		"Wfs": "WFS",
 		"Dfs": "DFS",
 		"Chain": "hash(chain)",
-		"OpenAddress": "hash(open address"
+		"OpenAddress": "hash(open address)"
 	];
 	alias AllSet = AliasSeq!(Line, Sentinel, Binary, Wfs, Dfs, Chain, OpenAddress);
 	makeLog!AllSet(100, 1200, 15000).flushLog("all");
